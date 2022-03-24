@@ -1,0 +1,24 @@
+#!/bin/bash
+
+red=$(tput setaf 1)
+green=$(tput setaf 2)
+yellow=$(tput setaf 3)
+reset=$(tput sgr0)
+
+echo '------------------------------------------'
+echo '|  EC2 Instance ID     |  IMDSv2 Status  |'
+echo '------------------------------------------'
+
+while read -r instance
+do
+        imds=$(aws ec2 describe-instances --instance-ids "$instance" --query "Reservations[*].Instances[*].MetadataOptions.HttpTokens" --output text )
+
+        if [ "$imds" == "required" ]; then
+                printf -v output "| ${yellow} %s ${reset}    | ${green} IMDSv2 ENABLED ${reset}    |" "$instance"
+        else
+                printf -v output "| ${yellow} %s ${reset}    | ${red} IMDSv2 NOT ENABLED ${reset}    |" "$instance"
+        fi
+
+        echo -e "$output"
+
+done < <(aws ec2 describe-instances --query "Reservations[*].Instances[*].InstanceId" --output text)
